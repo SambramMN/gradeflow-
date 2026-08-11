@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useApp } from '../../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import {
   GraduationCap, BookOpen, Award, TrendingUp, Plus, ArrowRight,
-  Calculator, Target, FlaskConical, BarChart3, ArrowUpRight, ArrowDownRight, GitCompare, Sparkles
+  Calculator, Target, FlaskConical, BarChart3, ArrowUpRight, ArrowDownRight, GitCompare, Sparkles,
+  FileText, Download, Cloud, CloudOff, UserCheck
 } from 'lucide-react';
 import { AnimatedNumber } from '../ui/AnimatedNumber';
 import {
@@ -15,6 +17,11 @@ import {
   CartesianGrid, Tooltip, PieChart, Pie, Cell,
 } from 'recharts';
 import { CHART_COLORS } from '../../lib/constants';
+import { exportAcademicCSV, generateAcademicPDF } from '../../lib/exportUtils';
+import { exportAcademicExcel } from '../../lib/excelExport';
+import { generateGlobalAcademicInsights } from '../../lib/comparisonEngine';
+import { isSupabaseConfigured } from '../../lib/supabaseClient';
+import { ShareModal } from '../compare/ShareModal';
 
 const stagger = {
   hidden: { opacity: 0 },
@@ -35,10 +42,8 @@ function ProgressRing({ value, max = 10, size = 200 }: { value: number; max?: nu
 
   return (
     <svg width={size} height={size} className="transform -rotate-90">
-      {/* Track */}
       <circle cx={size / 2} cy={size / 2} r={radius}
         fill="none" stroke="var(--border-primary)" strokeWidth={strokeWidth} />
-      {/* Progress */}
       <motion.circle
         cx={size / 2} cy={size / 2} r={radius}
         fill="none" stroke="url(#ring-gradient)" strokeWidth={strokeWidth}
@@ -59,9 +64,13 @@ function ProgressRing({ value, max = 10, size = 200 }: { value: number; max?: nu
 }
 
 export function Dashboard() {
-  const { state, addSemester } = useApp();
+  const { state, addSemester, addToast } = useApp();
   const navigate = useNavigate();
-  const { semesters, settings, friends = [] } = state;
+  const { semesters, settings, friends = [], profiles = [], activeProfileId } = state;
+
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  const activeProfile = profiles.find((p) => p.id === activeProfileId) || profiles[0];
 
   const cgpaResult = calculateCGPA(semesters, settings.cgpaToPercentageMultiplier);
   const latestSemester = semesters.length > 0 ? semesters[semesters.length - 1] : null;
@@ -76,6 +85,22 @@ export function Dashboard() {
 
   const pieData = Object.entries(gradeDistribution).map(([grade, count]) => ({ name: grade, value: count }));
 
+  const handlePDFExport = () => {
+    const insights = generateGlobalAcademicInsights(cgpaResult.cgpa, semesters, friends);
+    generateAcademicPDF(settings, semesters, cgpaResult, insights);
+    addToast('Academic Report PDF downloaded', 'success');
+  };
+
+  const handleExcelExport = () => {
+    exportAcademicExcel(settings, semesters, cgpaResult, friends);
+    addToast('Excel (.xlsx) Workbook downloaded', 'success');
+  };
+
+  const handleCSVExport = () => {
+    exportAcademicCSV(settings.studentName, settings.university, settings.course, semesters, friends);
+    addToast('CSV Dataset downloaded', 'success');
+  };
+
   const quickActions = [
     { label: 'Compare', icon: GitCompare, path: '/compare' },
     { label: 'What-If', icon: FlaskConical, path: '/what-if' },
@@ -85,32 +110,63 @@ export function Dashboard() {
 
   return (
     <motion.div variants={stagger} initial="hidden" animate="visible" className="space-y-8">
-      {/* Header */}
+      {/* Header with Active Profile & Cloud Sync Status */}
       <motion.div variants={fadeUp} className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
-          <p className="text-xs font-mono uppercase tracking-widest mb-2" style={{ color: 'var(--text-muted)' }}>
-            Dashboard
-          </p>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-primary)', color: 'var(--text-secondary)' }}>
+              <UserCheck className="w-3 h-3 text-emerald-400" />
+              {activeProfile?.name || settings.studentName || 'Active Profile'}
+            </span>
+
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-primary)', color: 'var(--text-tertiary)' }}>
+              {isSupabaseConfigured ? <Cloud className="w-3 h-3 text-emerald-400" /> : <CloudOff className="w-3 h-3 text-amber-400" />}
+              {isSupabaseConfigured ? 'Synced to Cloud' : 'Local Storage Mode'}
+            </span>
+          </div>
+
           <h1 className="text-3xl sm:text-4xl font-display font-bold tracking-[-0.03em]" style={{ color: 'var(--text-primary)' }}>
-            {settings.studentName ? `${settings.studentName}'s` : 'Academic'}{' '}
-            <span className="text-gradient-accent">Overview</span>
+            Academic <span className="text-gradient-accent">Overview</span>
           </h1>
+          <p className="text-xs font-mono mt-1" style={{ color: 'var(--text-tertiary)' }}>
+            {settings.course} · {settings.university}
+          </p>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-          onClick={() => { addSemester(); navigate('/semesters'); }}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold font-heading transition-all"
-          style={{ background: '#c8ff00', color: '#0a0a0a' }}
-        >
-          <Plus className="w-4 h-4" /> Add Semester
-        </motion.button>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <motion.button
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+            onClick={handlePDFExport}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold font-heading transition-all"
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-primary)', color: 'var(--text-primary)' }}
+          >
+            <FileText className="w-3.5 h-3.5" /> Academic Report
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+            onClick={handleExcelExport}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold font-heading transition-all"
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-primary)', color: 'var(--text-primary)' }}
+          >
+            <Download className="w-3.5 h-3.5" /> Excel (.xlsx)
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+            onClick={() => { addSemester(); navigate('/semesters'); }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold font-heading transition-all"
+            style={{ background: '#c8ff00', color: '#0a0a0a' }}
+          >
+            <Plus className="w-4 h-4" /> Add Semester
+          </motion.button>
+        </div>
       </motion.div>
 
       {/* CGPA Hero + Metrics */}
       <motion.div variants={fadeUp} className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* CGPA Ring - Hero */}
         <div className="lg:col-span-5 card p-8 flex flex-col items-center justify-center relative overflow-hidden min-h-[280px]">
-          {/* Ambient glow behind ring */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="w-48 h-48 rounded-full opacity-20"
               style={{ background: 'radial-gradient(circle, rgba(200,255,0,0.3), transparent 70%)' }} />
@@ -146,7 +202,7 @@ export function Dashboard() {
             { label: 'Percentage', value: cgpaResult.percentage, sub: `×${settings.cgpaToPercentageMultiplier}`, icon: TrendingUp, decimal: 1, suffix: '%' },
             { label: 'Credits', value: cgpaResult.totalCredits, sub: `${totalSubjects} subjects`, icon: BookOpen, decimal: 0 },
             { label: 'Semesters', value: cgpaResult.completedSemesters, sub: `Target: ${settings.targetCGPA}`, icon: GraduationCap, decimal: 0 },
-          ].map((m, i) => (
+          ].map((m) => (
             <motion.div key={m.label} variants={fadeUp} className="card p-5 group">
               <div className="flex items-center justify-between mb-3">
                 <m.icon className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
@@ -164,17 +220,17 @@ export function Dashboard() {
         </div>
       </motion.div>
 
-      {/* NEW SECTION: Performance Insights & Compare Banner */}
+      {/* Performance Insights & Compare Banner */}
       <motion.div variants={fadeUp} className="card p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden" style={{ border: '1px solid var(--border-hover)' }}>
         <div className="space-y-1 z-10">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono mb-1" style={{ background: 'var(--accent-dim)', color: '#c8ff00' }}>
             <Sparkles className="w-3 h-3" /> Performance Benchmarks & Analytics
           </div>
           <h3 className="text-lg font-display font-bold" style={{ color: 'var(--text-primary)' }}>
-            Academic Comparison & Insights
+            Academic Comparison & Benchmarking Hub
           </h3>
           <p className="text-xs font-mono max-w-xl" style={{ color: 'var(--text-secondary)' }}>
-            Compare performance across semesters, benchmark against friends, track subject matrices, and generate shareable transcripts.
+            Compare performance across semesters, benchmark against friends, track subject grade matrices, and export academic transcripts.
           </p>
         </div>
 
@@ -189,34 +245,6 @@ export function Dashboard() {
           </motion.button>
         </div>
       </motion.div>
-
-      {/* Target Progress */}
-      {settings.targetCGPA > 0 && cgpaResult.cgpa > 0 && (
-        <motion.div variants={fadeUp} className="card p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Target className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
-              <span className="text-sm font-heading font-semibold" style={{ color: 'var(--text-primary)' }}>Goal Progress</span>
-            </div>
-            <span className="text-xs font-mono font-bold" style={{ color: '#c8ff00' }}>
-              {Math.min(100, Math.round((cgpaResult.cgpa / settings.targetCGPA) * 100))}%
-            </span>
-          </div>
-          <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--border-primary)' }}>
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${Math.min(100, (cgpaResult.cgpa / settings.targetCGPA) * 100)}%` }}
-              transition={{ duration: 1.2, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="h-full rounded-full"
-              style={{ background: 'linear-gradient(90deg, #c8ff00, #a3e635)' }}
-            />
-          </div>
-          <div className="flex justify-between mt-2">
-            <span className="text-[11px] font-mono" style={{ color: 'var(--text-muted)' }}>Current: {cgpaResult.cgpa}</span>
-            <span className="text-[11px] font-mono" style={{ color: 'var(--text-muted)' }}>Target: {settings.targetCGPA}</span>
-          </div>
-        </motion.div>
-      )}
 
       {/* Charts */}
       {sgpaProgression.length > 0 && (
@@ -274,55 +302,7 @@ export function Dashboard() {
         </motion.div>
       )}
 
-      {/* Recent + Quick Actions */}
-      <motion.div variants={fadeUp} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Recent Semesters */}
-        {semesters.length > 0 && (
-          <div className="card p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-heading font-semibold" style={{ color: 'var(--text-primary)' }}>Recent</h3>
-              <button onClick={() => navigate('/semesters')} className="text-[11px] font-mono flex items-center gap-1 transition-colors" style={{ color: 'var(--text-tertiary)' }}>
-                View All <ArrowRight className="w-3 h-3" />
-              </button>
-            </div>
-            <div className="space-y-2">
-              {semesters.slice(-3).reverse().map((sem) => (
-                <div key={sem.id} className="flex items-center justify-between py-2.5 px-3 rounded-xl transition-colors" style={{ background: 'var(--bg-card)' }}>
-                  <div>
-                    <p className="text-sm font-heading font-medium" style={{ color: 'var(--text-primary)' }}>{sem.name}</p>
-                    <p className="text-[11px] font-mono" style={{ color: 'var(--text-muted)' }}>
-                      {sem.subjects.length} subj · {sem.totalCredits} cr
-                    </p>
-                  </div>
-                  <p className="text-sm font-mono font-bold" style={{ color: getClassificationColor(sem.sgpa) }}>
-                    {sem.sgpa.toFixed(2)}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Quick Actions */}
-        <div className="card p-5">
-          <h3 className="text-sm font-heading font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Quick Actions</h3>
-          <div className="grid grid-cols-2 gap-2">
-            {quickActions.map((action) => (
-              <motion.button
-                key={action.path}
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => navigate(action.path)}
-                className="flex items-center gap-3 p-3.5 rounded-xl transition-all text-left"
-                style={{ background: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}
-              >
-                <action.icon className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
-                <span className="text-xs font-heading font-medium" style={{ color: 'var(--text-secondary)' }}>{action.label}</span>
-              </motion.button>
-            ))}
-          </div>
-        </div>
-      </motion.div>
+      <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} />
     </motion.div>
   );
 }

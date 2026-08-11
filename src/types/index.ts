@@ -50,7 +50,7 @@ export interface FriendSubject {
 export interface FriendProfile {
   id: string;
   name: string;
-  title: string; // e.g. "Database King", "Class Benchmark"
+  title: string;
   university: string;
   course: string;
   semester: number;
@@ -61,14 +61,30 @@ export interface FriendProfile {
   createdAt: string;
 }
 
-// ─── Comparison Preset / Saved History ──────────────────────────────────────
+// ─── Saved Comparison ───────────────────────────────────────────────────────
 
 export interface SavedComparison {
   id: string;
   title: string;
   type: 'semester-vs-semester' | 'friend-comparison' | 'what-if-comparison';
-  targetA: string; // semester ID or friend ID or 'current'
-  targetB: string; // semester ID or friend ID or 'projected'
+  targetA: string;
+  targetB: string;
+  createdAt: string;
+}
+
+// ─── Student Profile ────────────────────────────────────────────────────────
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+  university: string;
+  college?: string;
+  course: string;
+  branch?: string;
+  academicYear?: string;
+  currentSemester: number;
+  studentId?: string;
   createdAt: string;
 }
 
@@ -77,18 +93,25 @@ export interface SavedComparison {
 export interface UserSettings {
   studentName: string;
   university: string;
+  college?: string;
   course: string;
+  branch?: string;
+  academicYear?: string;
+  studentId?: string;
   currentSemester: number;
   gradeSystem: GradeEntry[];
   cgpaToPercentageMultiplier: number;
   theme: 'light' | 'dark' | 'system';
   animationsEnabled: boolean;
   targetCGPA: number;
+  syncEnabled?: boolean;
 }
 
-// ─── App State ──────────────────────────────────────────────────────────────
+// ─── App Data ──────────────────────────────────────────────────────────────
 
 export interface AppData {
+  profiles: UserProfile[];
+  activeProfileId: string;
   semesters: Semester[];
   settings: UserSettings;
   hasOnboarded: boolean;
@@ -140,15 +163,11 @@ export interface SubjectPerformanceData {
   averageGradePoint: number;
 }
 
-// ─── Chart Data ─────────────────────────────────────────────────────────────
-
 export interface ChartDataPoint {
   name: string;
   value: number;
   label?: string;
 }
-
-// ─── Toast ──────────────────────────────────────────────────────────────────
 
 export interface Toast {
   id: string;
@@ -156,8 +175,6 @@ export interface Toast {
   type: 'success' | 'error' | 'info' | 'warning';
   duration?: number;
 }
-
-// ─── Navigation ─────────────────────────────────────────────────────────────
 
 export interface NavItem {
   label: string;

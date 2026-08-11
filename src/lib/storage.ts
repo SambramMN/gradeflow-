@@ -4,6 +4,8 @@ import { DEFAULT_SETTINGS } from './constants';
 const STORAGE_KEY = 'gradeflow-data';
 
 const DEFAULT_APP_DATA: AppData = {
+  profiles: [],
+  activeProfileId: '',
   semesters: [],
   settings: DEFAULT_SETTINGS,
   hasOnboarded: false,
@@ -17,6 +19,8 @@ export function loadAppData(): AppData {
     if (!raw) return DEFAULT_APP_DATA;
     const parsed = JSON.parse(raw) as Partial<AppData>;
     return {
+      profiles: parsed.profiles ?? DEFAULT_APP_DATA.profiles,
+      activeProfileId: parsed.activeProfileId ?? DEFAULT_APP_DATA.activeProfileId,
       semesters: parsed.semesters ?? DEFAULT_APP_DATA.semesters,
       settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
       hasOnboarded: parsed.hasOnboarded ?? DEFAULT_APP_DATA.hasOnboarded,
@@ -49,6 +53,8 @@ export function importAppData(json: string): AppData | null {
     const parsed = JSON.parse(json);
     if (parsed && typeof parsed === 'object' && Array.isArray(parsed.semesters)) {
       return {
+        profiles: Array.isArray(parsed.profiles) ? parsed.profiles : [],
+        activeProfileId: parsed.activeProfileId || '',
         semesters: parsed.semesters,
         settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
         hasOnboarded: parsed.hasOnboarded ?? true,
