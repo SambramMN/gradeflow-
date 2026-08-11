@@ -1,11 +1,11 @@
 import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, BookOpen, GraduationCap, BarChart3, Settings } from 'lucide-react';
+import { LayoutDashboard, BookOpen, GitCompare, BarChart3, Settings } from 'lucide-react';
 
 const items = [
   { label: 'Home', path: '/', icon: LayoutDashboard },
   { label: 'Semesters', path: '/semesters', icon: BookOpen },
-  { label: 'CGPA', path: '/cgpa', icon: GraduationCap },
+  { label: 'Compare', path: '/compare', icon: GitCompare },
   { label: 'Analytics', path: '/analytics', icon: BarChart3 },
   { label: 'Settings', path: '/settings', icon: Settings },
 ];

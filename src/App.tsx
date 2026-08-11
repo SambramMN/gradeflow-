@@ -9,6 +9,7 @@ import { CGPACalculator } from './components/calculator/CGPACalculator';
 import { TargetCGPACalculator } from './components/calculator/TargetCGPA';
 import { WhatIfSimulator } from './components/calculator/WhatIfSimulator';
 import { Analytics } from './components/analytics/Analytics';
+import { Compare } from './components/compare/Compare';
 import { Settings } from './components/settings/Settings';
 
 function AppRoutes() {
@@ -30,6 +31,7 @@ function AppRoutes() {
       <Route path="/" element={<AppLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="semesters" element={<SemesterList />} />
+        <Route path="compare" element={<Compare />} />
         <Route path="sgpa" element={<SGPACalculator />} />
         <Route path="cgpa" element={<CGPACalculator />} />
         <Route path="what-if" element={<WhatIfSimulator />} />

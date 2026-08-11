@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useCallback, useEffect, useReducer } from 'react';
-import type { AppData, Semester, Subject, UserSettings, Toast, GradeEntry } from '../types';
+import type { AppData, Semester, Subject, UserSettings, Toast, FriendProfile, SavedComparison } from '../types';
 import { loadAppData, saveAppData, clearAppData } from '../lib/storage';
 import { DEFAULT_SETTINGS } from '../lib/constants';
 import {
@@ -31,6 +31,11 @@ type Action =
   | { type: 'DELETE_SUBJECT'; payload: { semesterId: string; subjectId: string } }
   | { type: 'REORDER_SUBJECTS'; payload: { semesterId: string; subjects: Subject[] } }
   | { type: 'UPDATE_SETTINGS'; payload: Partial<UserSettings> }
+  | { type: 'ADD_FRIEND'; payload: FriendProfile }
+  | { type: 'UPDATE_FRIEND'; payload: FriendProfile }
+  | { type: 'DELETE_FRIEND'; payload: string }
+  | { type: 'ADD_SAVED_COMPARISON'; payload: SavedComparison }
+  | { type: 'DELETE_SAVED_COMPARISON'; payload: string }
   | { type: 'RESET_DATA' }
   | { type: 'IMPORT_DATA'; payload: AppData }
   | { type: 'ADD_TOAST'; payload: Toast }
@@ -149,11 +154,45 @@ function reducer(state: AppState, action: Action): AppState {
         settings: { ...state.settings, ...action.payload },
       };
 
+    case 'ADD_FRIEND':
+      return {
+        ...state,
+        friends: [...(state.friends || []), action.payload],
+      };
+
+    case 'UPDATE_FRIEND':
+      return {
+        ...state,
+        friends: (state.friends || []).map((f) =>
+          f.id === action.payload.id ? action.payload : f
+        ),
+      };
+
+    case 'DELETE_FRIEND':
+      return {
+        ...state,
+        friends: (state.friends || []).filter((f) => f.id !== action.payload),
+      };
+
+    case 'ADD_SAVED_COMPARISON':
+      return {
+        ...state,
+        savedComparisons: [...(state.savedComparisons || []), action.payload],
+      };
+
+    case 'DELETE_SAVED_COMPARISON':
+      return {
+        ...state,
+        savedComparisons: (state.savedComparisons || []).filter((c) => c.id !== action.payload),
+      };
+
     case 'RESET_DATA':
       return {
         semesters: [],
         settings: DEFAULT_SETTINGS,
         hasOnboarded: false,
+        friends: [],
+        savedComparisons: [],
         toasts: state.toasts,
       };
 
@@ -192,6 +231,11 @@ interface AppContextType {
   deleteSubject: (semesterId: string, subjectId: string) => void;
   reorderSubjects: (semesterId: string, subjects: Subject[]) => void;
   updateSettings: (settings: Partial<UserSettings>) => void;
+  addFriend: (friend: Omit<FriendProfile, 'id' | 'createdAt'>) => void;
+  updateFriend: (friend: FriendProfile) => void;
+  deleteFriend: (id: string) => void;
+  addSavedComparison: (comparison: Omit<SavedComparison, 'id' | 'createdAt'>) => void;
+  deleteSavedComparison: (id: string) => void;
   resetData: () => void;
   importData: (data: AppData) => void;
   setOnboarded: () => void;
@@ -215,7 +259,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const { toasts: _, ...persistData } = state;
     saveAppData(persistData);
-  }, [state.semesters, state.settings, state.hasOnboarded]);
+  }, [state.semesters, state.settings, state.hasOnboarded, state.friends, state.savedComparisons]);
 
   const addToast = useCallback((message: string, type: Toast['type']) => {
     const id = generateId();
@@ -288,6 +332,56 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [addToast]
   );
 
+  const addFriend = useCallback(
+    (friendData: Omit<FriendProfile, 'id' | 'createdAt'>) => {
+      const friend: FriendProfile = {
+        ...friendData,
+        id: generateId(),
+        createdAt: new Date().toISOString(),
+      };
+      dispatch({ type: 'ADD_FRIEND', payload: friend });
+      addToast(`Comparison profile "${friend.name}" added`, 'success');
+    },
+    [addToast]
+  );
+
+  const updateFriend = useCallback(
+    (friend: FriendProfile) => {
+      dispatch({ type: 'UPDATE_FRIEND', payload: friend });
+      addToast(`Profile "${friend.name}" updated`, 'success');
+    },
+    [addToast]
+  );
+
+  const deleteFriend = useCallback(
+    (id: string) => {
+      dispatch({ type: 'DELETE_FRIEND', payload: id });
+      addToast('Profile removed', 'info');
+    },
+    [addToast]
+  );
+
+  const addSavedComparison = useCallback(
+    (compData: Omit<SavedComparison, 'id' | 'createdAt'>) => {
+      const saved: SavedComparison = {
+        ...compData,
+        id: generateId(),
+        createdAt: new Date().toISOString(),
+      };
+      dispatch({ type: 'ADD_SAVED_COMPARISON', payload: saved });
+      addToast(`Comparison "${saved.title}" saved`, 'success');
+    },
+    [addToast]
+  );
+
+  const deleteSavedComparison = useCallback(
+    (id: string) => {
+      dispatch({ type: 'DELETE_SAVED_COMPARISON', payload: id });
+      addToast('Saved comparison removed', 'info');
+    },
+    [addToast]
+  );
+
   const resetData = useCallback(() => {
     clearAppData();
     dispatch({ type: 'RESET_DATA' });
@@ -337,6 +431,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         deleteSubject,
         reorderSubjects,
         updateSettings,
+        addFriend,
+        updateFriend,
+        deleteFriend,
+        addSavedComparison,
+        deleteSavedComparison,
         resetData,
         importData: importDataFn,
         setOnboarded,

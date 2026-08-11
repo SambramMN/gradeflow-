@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import {
   GraduationCap, BookOpen, Award, TrendingUp, Plus, ArrowRight,
-  Calculator, Target, FlaskConical, BarChart3, ArrowUpRight, ArrowDownRight,
+  Calculator, Target, FlaskConical, BarChart3, ArrowUpRight, ArrowDownRight, GitCompare, Sparkles
 } from 'lucide-react';
 import { AnimatedNumber } from '../ui/AnimatedNumber';
 import {
@@ -61,7 +61,7 @@ function ProgressRing({ value, max = 10, size = 200 }: { value: number; max?: nu
 export function Dashboard() {
   const { state, addSemester } = useApp();
   const navigate = useNavigate();
-  const { semesters, settings } = state;
+  const { semesters, settings, friends = [] } = state;
 
   const cgpaResult = calculateCGPA(semesters, settings.cgpaToPercentageMultiplier);
   const latestSemester = semesters.length > 0 ? semesters[semesters.length - 1] : null;
@@ -77,7 +77,7 @@ export function Dashboard() {
   const pieData = Object.entries(gradeDistribution).map(([grade, count]) => ({ name: grade, value: count }));
 
   const quickActions = [
-    { label: 'SGPA Calc', icon: Calculator, path: '/sgpa' },
+    { label: 'Compare', icon: GitCompare, path: '/compare' },
     { label: 'What-If', icon: FlaskConical, path: '/what-if' },
     { label: 'Target', icon: Target, path: '/target' },
     { label: 'Analytics', icon: BarChart3, path: '/analytics' },
@@ -161,6 +161,32 @@ export function Dashboard() {
               <p className="text-xs font-mono mt-1" style={{ color: 'var(--text-tertiary)' }}>{m.sub}</p>
             </motion.div>
           ))}
+        </div>
+      </motion.div>
+
+      {/* NEW SECTION: Performance Insights & Compare Banner */}
+      <motion.div variants={fadeUp} className="card p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden" style={{ border: '1px solid var(--border-hover)' }}>
+        <div className="space-y-1 z-10">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono mb-1" style={{ background: 'var(--accent-dim)', color: '#c8ff00' }}>
+            <Sparkles className="w-3 h-3" /> Performance Benchmarks & Analytics
+          </div>
+          <h3 className="text-lg font-display font-bold" style={{ color: 'var(--text-primary)' }}>
+            Academic Comparison & Insights
+          </h3>
+          <p className="text-xs font-mono max-w-xl" style={{ color: 'var(--text-secondary)' }}>
+            Compare performance across semesters, benchmark against friends, track subject matrices, and generate shareable transcripts.
+          </p>
+        </div>
+
+        <div className="z-10 flex-shrink-0">
+          <motion.button
+            whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+            onClick={() => navigate('/compare')}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-heading font-semibold transition-all"
+            style={{ background: '#c8ff00', color: '#0a0a0a' }}
+          >
+            Compare Performance <ArrowRight className="w-4 h-4" />
+          </motion.button>
         </div>
       </motion.div>
 

@@ -1,29 +1,31 @@
-# GradeFlow — CGPA Calculator & Academic Tracker
+# GradeFlow — CGPA Calculator & Academic Performance Platform
 
-A modern, award-worthy, interactive CGPA and SGPA calculator with rich academic analytics, target goal engineering, what-if grade simulation, and local storage persistence.
+A modern, award-worthy, interactive CGPA and SGPA calculator with rich academic analytics, target goal engineering, what-if grade simulation, friend benchmarking, and official transcript generation.
 
 ---
 
 ## Features
 
+### Core Calculators & Trackers
 - **SGPA & CGPA Calculators**: Instant calculations with credit-weighted grade point average algorithms (`Σ(Credit × GP) / Σ(Credits)`).
 - **Semester & Subject Management**: Full CRUD capabilities — add, edit, delete, duplicate, clear semesters and subject rows with live auto-recalculation.
 - **What-If Simulator**: Project how future/hypothetical semester grades will impact overall cumulative CGPA with real-time trend feedback.
 - **Target CGPA Calculator**: Goal engineering engine that calculates the required SGPA needed in remaining credits to achieve a target CGPA.
-- **Academic Analytics & Data Visualizations**:
-  - CGPA & SGPA progression timeline (Area Chart)
-  - Grade distribution breakdown (Bar Chart & Pie Chart)
-  - Credits per semester tracker
-  - Semester comparison matrix with delta trends
-  - Best and weakest subject identification
-- **University Grade Presets**: Pre-configured grading scales (Indian 10-Point, VTU, Anna University, US 4.0, Mumbai University) plus fully customizable grade points.
-- **Data Privacy & Storage**: 100% client-side persistence using `localStorage`, with full JSON backup export and import functionality.
-- **Design System & UX**:
-  - Dark / Light mode with smooth theme toggling
-  - Custom cursor follower for desktop pointer interaction
-  - Animated SVG progress ring for hero CGPA visual
-  - Spring-based micro-interactions powered by Framer Motion
-  - Reduced-motion accessibility support
+
+### NEW: Academic Comparison & Benchmarking Platform
+- **My Semester Comparison**: Side-by-side comparison between any two semesters (e.g., Semester 4 vs Semester 5) showing SGPA delta, CGPA delta, credit difference, and percentage improvements.
+- **Previous vs Current Semester Quick Progress**: Instant status badges (`↑ Improved`, `↓ Declined`, `→ Stable`) with step metrics (`7.82 → 8.61`, `+10.1%`).
+- **Friend & Classmate Benchmarks**: Create and manage friend benchmark profiles (Name, Title/Badge like *"Database King"*, University, Course, Semester, SGPA, CGPA, Credits, Subject Breakdown) stored 100% locally on your device.
+- **Academic Leaderboard**: Non-toxic performance ranking ordered by CGPA/SGPA.
+- **Subject-by-Subject Grade Matrix**: Compare subject-level scores across matching courses (`Data Structures: Me A+ vs Rahul A`), highlighting advantages and equal performances.
+- **Multi-Semester Journey Timeline**: Multi-select interactive timeline displaying academic progress across all semesters.
+- **Comparison History**: Save custom comparison presets with open, rename, and delete options.
+- **Dynamic Insights Engine**: Automatically generates natural language insights from math calculations (e.g., *"Your CGPA is 0.31 higher than Rahul's."*, *"You performed better in 4 out of 6 shared subjects."*).
+
+### Export & Sharing Tools
+- **PDF Academic Transcript**: Download an official PDF performance transcript powered by `jsPDF`.
+- **CSV Dataset Export**: Download complete semester, subject, grade point, and friend benchmark data as `academic-performance-2026.csv`.
+- **Shareable Text Summaries**: Copy formatted text summaries directly to clipboard.
 
 ---
 
@@ -35,6 +37,7 @@ A modern, award-worthy, interactive CGPA and SGPA calculator with rich academic 
 - **Styling**: Tailwind CSS 3 with custom CSS design tokens
 - **Animations**: Framer Motion
 - **Data Visualization**: Recharts
+- **PDF Generation**: jsPDF
 - **Icons**: Lucide React
 - **Routing**: React Router DOM v6
 - **Persistence**: LocalStorage API
@@ -44,6 +47,7 @@ A modern, award-worthy, interactive CGPA and SGPA calculator with rich academic 
 ## Project Structure
 
 ```
+├── vercel.json                 # Vercel SPA rewrite configuration
 ├── index.html                  # HTML entry point with Google Fonts
 ├── src/
 │   ├── main.tsx                # Application entry point
@@ -53,6 +57,8 @@ A modern, award-worthy, interactive CGPA and SGPA calculator with rich academic 
 │   │   └── index.ts            # TypeScript interface definitions
 │   ├── lib/
 │   │   ├── calculations.ts     # Core calculation engine
+│   │   ├── comparisonEngine.ts # Semester & friend comparison math engine
+│   │   ├── exportUtils.ts      # CSV export & jsPDF transcript generator
 │   │   ├── storage.ts          # LocalStorage persistence & JSON import/export
 │   │   ├── gradePresets.ts     # University grade system presets
 │   │   └── constants.ts        # App constants & chart colors
@@ -66,6 +72,7 @@ A modern, award-worthy, interactive CGPA and SGPA calculator with rich academic 
 │       ├── onboarding/         # Welcome hero section
 │       ├── dashboard/          # Main dashboard & CGPA progress ring
 │       ├── semester/           # Semester & subject CRUD management
+│       ├── compare/            # Compare, FriendModal, ShareModal
 │       ├── calculator/         # SGPA, CGPA, Target, What-If calculators
 │       ├── analytics/          # Analytics & data visualization charts
 │       └── settings/           # User profile, presets, theme & data management
@@ -98,7 +105,7 @@ A modern, award-worthy, interactive CGPA and SGPA calculator with rich academic 
 
 ---
 
-## Development
+## Development & Build
 
 - **TypeScript Type Check**:
   ```bash
@@ -110,44 +117,14 @@ A modern, award-worthy, interactive CGPA and SGPA calculator with rich academic 
   npm run build
   ```
 
-- **Preview Production Build**:
-  ```bash
-  npm run preview
-  ```
-
 ---
 
 ## Deployment
 
-This application is built as a pure client-side Single Page Application (SPA) with Vite.
-
-### Vercel Deployment
-
-1. Install Vercel CLI (optional):
-   ```bash
-   npm install -g vercel
-   ```
-2. Deploy:
-   ```bash
-   vercel
-   ```
-   - **Framework Preset**: Vite
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-
-### Netlify Deployment
-
-1. Set **Build Command**: `npm run build`
-2. Set **Publish Directory**: `dist`
-
----
-
-## Future Improvements
-
-- PDF report card / academic transcript generation
-- Multi-user profiles for managing different degrees or majors
-- Cloud sync backend option (Firebase / Supabase integration)
-- Export performance statistics as CSV / Excel
+Deploy live on Vercel:
+```bash
+npx vercel --prod --yes
+```
 
 ---
 

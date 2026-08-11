@@ -37,6 +37,41 @@ export interface Semester {
   createdAt: string;
 }
 
+// ─── Friend / Classmate Comparison Profile ──────────────────────────────────
+
+export interface FriendSubject {
+  id: string;
+  name: string;
+  grade: string;
+  gradePoint: number;
+  credits: number;
+}
+
+export interface FriendProfile {
+  id: string;
+  name: string;
+  title: string; // e.g. "Database King", "Class Benchmark"
+  university: string;
+  course: string;
+  semester: number;
+  sgpa: number;
+  cgpa: number;
+  credits: number;
+  subjects: FriendSubject[];
+  createdAt: string;
+}
+
+// ─── Comparison Preset / Saved History ──────────────────────────────────────
+
+export interface SavedComparison {
+  id: string;
+  title: string;
+  type: 'semester-vs-semester' | 'friend-comparison' | 'what-if-comparison';
+  targetA: string; // semester ID or friend ID or 'current'
+  targetB: string; // semester ID or friend ID or 'projected'
+  createdAt: string;
+}
+
 // ─── Settings ───────────────────────────────────────────────────────────────
 
 export interface UserSettings {
@@ -57,6 +92,8 @@ export interface AppData {
   semesters: Semester[];
   settings: UserSettings;
   hasOnboarded: boolean;
+  friends: FriendProfile[];
+  savedComparisons: SavedComparison[];
 }
 
 // ─── Calculation Results ────────────────────────────────────────────────────

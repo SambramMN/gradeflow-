@@ -29,7 +29,7 @@ export function Settings() {
   const [showReset, setShowReset] = useState(false);
 
   const handleExport = () => {
-    const json = exportAppData({ semesters: state.semesters, settings: state.settings, hasOnboarded: state.hasOnboarded });
+    const json = exportAppData(state);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

@@ -8,6 +8,7 @@ import {
   FlaskConical,
   Target,
   BarChart3,
+  GitCompare,
   Settings,
   Sun,
   Moon,
@@ -16,12 +17,13 @@ import { useTheme } from '../../hooks/useTheme';
 
 const navIcons: Record<string, React.ElementType> = {
   LayoutDashboard, BookOpen, Calculator, GraduationCap,
-  FlaskConical, Target, BarChart3, Settings,
+  FlaskConical, Target, BarChart3, GitCompare, Settings,
 };
 
 const navItems = [
   { label: 'Dashboard', path: '/', icon: 'LayoutDashboard' },
   { label: 'Semesters', path: '/semesters', icon: 'BookOpen' },
+  { label: 'Compare', path: '/compare', icon: 'GitCompare' },
   { label: 'SGPA', path: '/sgpa', icon: 'Calculator' },
   { label: 'CGPA', path: '/cgpa', icon: 'GraduationCap' },
   { label: 'What-If', path: '/what-if', icon: 'FlaskConical' },

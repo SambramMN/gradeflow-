@@ -7,6 +7,8 @@ const DEFAULT_APP_DATA: AppData = {
   semesters: [],
   settings: DEFAULT_SETTINGS,
   hasOnboarded: false,
+  friends: [],
+  savedComparisons: [],
 };
 
 export function loadAppData(): AppData {
@@ -18,6 +20,8 @@ export function loadAppData(): AppData {
       semesters: parsed.semesters ?? DEFAULT_APP_DATA.semesters,
       settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
       hasOnboarded: parsed.hasOnboarded ?? DEFAULT_APP_DATA.hasOnboarded,
+      friends: parsed.friends ?? DEFAULT_APP_DATA.friends,
+      savedComparisons: parsed.savedComparisons ?? DEFAULT_APP_DATA.savedComparisons,
     };
   } catch {
     return DEFAULT_APP_DATA;
@@ -48,6 +52,8 @@ export function importAppData(json: string): AppData | null {
         semesters: parsed.semesters,
         settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
         hasOnboarded: parsed.hasOnboarded ?? true,
+        friends: Array.isArray(parsed.friends) ? parsed.friends : [],
+        savedComparisons: Array.isArray(parsed.savedComparisons) ? parsed.savedComparisons : [],
       };
     }
     return null;
